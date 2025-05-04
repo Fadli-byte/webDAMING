@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tentang Aplikasi - Iris Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Iris Flower Animation Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30,50 Q50,20 70,50 T90,50" fill="none" stroke="%23e0e0ff" stroke-width="1"/><circle cx="50" cy="50" r="5" fill="%23d8d0ff"/></svg>') repeat;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        /* Floating Iris Petals */
+        @keyframes floatPetal {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .floating-petal {
+            position: fixed;
+            width: 30px;
+            height: 12px;
+            background: linear-gradient(135deg, #d4c1ff, #9c88ff);
+            border-radius: 100% 0;
+            bottom: -20px;
+            z-index: -1;
+            animation: floatPetal 15s linear infinite;
+        }
+        
+        /* Pulsing Glow Effect */
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(108, 92, 231, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(108, 92, 231, 0.4);
+            }
+        }
+
+        /* Soft Float Animation */
+        @keyframes softFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        /* Color Transition Animation */
+        @keyframes colorTransition {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 15s ease infinite;
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 10s ease infinite;
+        }
+        
+        .header h1 {
+            animation: softFloat 6s ease-in-out infinite;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            width: 150%;
+            left: 150%;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 10s ease infinite;
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            animation: pulseGlow 5s infinite;
+            border: none;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(108, 92, 231, 0.25);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #6c5ce7, #2980b9);
+            background-size: 200% 200%;
+            animation: colorTransition 10s ease infinite;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.2rem;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #5649c0);
+            border: none;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5649c0, #4a3cb7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(108, 92, 231, 0.4);
+        }
+        
+        .icon-feature {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #6c5ce7;
+            transition: transform 0.5s ease;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(108, 92, 231, 0.3);
+        }
+        
+        .feature-card:hover .icon-feature {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        /* Timeline Styling */
+        .timeline {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 50px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #6c5ce7, #2980b9);
+            border-radius: 3px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.2);
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 15px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6c5ce7;
+            box-shadow: 0 0 0 5px rgba(108, 92, 231, 0.2);
+            z-index: 1;
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 20px;
+            width: 20px;
+            height: 2px;
+            background: #6c5ce7;
+        }
+        
+        .info-img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-img:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Iris flower images */
+        .iris-image {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .iris-image-1 {
+            top: 20%;
+            left: 5%;
+            width: 120px;
+            height: 120px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g transform="translate(60,60)"><path d="M0,-30 C20,-25 20,25 0,30 C-20,25 -20,-25 0,-30" fill="%239c88ff" /><path d="M-2,-2 C15,-15 15,15 -2,2 C-15,15 -15,-15 -2,-2" fill="%23f8f8f8" /></g></svg>') no-repeat;
+            animation: softFloat 8s infinite ease-in-out;
+        }
+        
+        .iris-image-2 {
+            bottom: 15%;
+            right: 5%;
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="translate(50,50)"><path d="M0,-25 C15,-20 15,20 0,25 C-15,20 -15,-20 0,-25" fill="%236c5ce7" /><path d="M-2,-2 C10,-12 10,12 -2,2 C-12,12 -12,-12 -2,-2" fill="%23f0f0ff" /></g></svg>') no-repeat;
+            animation: softFloat 12s infinite ease-in-out reverse;
+        }
+        
+        /* Social Links Animation */
+        .social-links a {
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        
+        .social-links a:hover {
+            transform: translateY(-3px) scale(1.2);
+            color: #a29bfe !important;
+        }
+        
+        /* Creator Badge */
+        .creator-badge {
+            position: relative;
+            display: inline-block;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #6c5ce7, #5649c0);
+            color: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .creator-badge::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            25% {
+                transform: translate(20px, 20px);
+            }
+            50% {
+                transform: translate(40px, 0);
+            }
+            75% {
+                transform: translate(20px, -20px);
+            }
+        }
+        
+        /* Interactive Flower Visual */
+        .flower-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            margin: 30px 0;
+            overflow: hidden;
+        }
+        
+        .flower {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+        }
+        
+        .petal {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+            transform-origin: center bottom;
+            transition: all 0.3s ease;
+        }
+        
+        .petal:nth-child(1) { transform: translateX(10px) rotate(0deg); }
+        .petal:nth-child(2) { transform: translateX(10px) rotate(72deg); }
+        .petal:nth-child(3) { transform: translateX(10px) rotate(144deg); }
+        .petal:nth-child(4) { transform: translateX(10px) rotate(216deg); }
+        .petal:nth-child(5) { transform: translateX(10px) rotate(288deg); }
+        
+        .flower-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #feca57, #ff9f43);
+            border-radius: 50%;
+            z-index: 2;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 159, 67, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .flower-center:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.7);
+        }
+        
+        @keyframes petalOpen {
+            0% { transform: translateX(10px) rotateY(0deg); }
+            100% { transform: translateX(30px) rotateY(30deg); }
+        }
+        
+        /* Interactive Cards */
+        .flip-card {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 15px;
+        }
+        
+        .flip-card-front {
+            background-color: #fff;
+        }
+        
+        .flip-card-back {
+            background: linear-gradient(135deg, #6c5ce7, #2980b9);
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        /* Species Interactive Buttons */
+        .species-btn {
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 50px;
+            background-color: #f8f9fa;
+            border: 2px solid #6c5ce7;
+            color: #6c5ce7;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .species-btn:hover {
+            background-color: #6c5ce7;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+        }
+        
+        .species-btn.active {
+            background-color: #6c5ce7;
+            color: white;
+        }
+        
+        .species-info {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        .species-info.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Fade-in animation for page load */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .content-section {
+            animation: fadeIn 1s ease-out;
+        }
+        
+        /* Interactive Stats */
+        .stat-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            margin: 10px;
+            position: relative;
+            width: 150px;
+        }
+        
+        .stat-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#6c5ce7 0%, #6c5ce7 var(--percentage), #e0e0e0 var(--percentage), #e0e0e0 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            transition: all 0.5s ease;
+        }
+        
+        .stat-circle::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+        }
+        
+        .stat-value {
+            position: relative;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6c5ce7;
+            z-index: 1;
+        }
+        
+        .stat-label {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        /* Iris Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 12px 15px;
+            text-align: center;
+        }
+        
+        .comparison-table thead tr {
+            background-color: #6c5ce7;
+            color: white;
+        }
+        
+        .comparison-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .comparison-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background-color: #e8e6ff;
+        }
+        
+        /* Value indicators */
+        .value-indicator {
+            display: inline-block;
+            width: 80%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .value-indicator-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9);
+            width: var(--value-percent);
+            transition: width 0.5s ease;
+        }
+
+        .footer .social-links a {
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 400% 100%;
+            background-position: 0 100%;
+
+        }
+        .footer .social-links a:hover {
+            color: #6c5ce7;
+            background-position: 100% 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container text-center">
+            <h1 class="display-4"><i class="fas fa-seedling me-2"></i>IRIS CLASSIFIER</h1>
+            <p class="lead">Informasi tentang Aplikasi Klasifikasi Bunga Iris</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mb-5">
+        <div class="row mb-4">
+            <div class="col-md-4 mb-4">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="m-0"><i class="fas fa-info-circle me-2"></i>Tentang Aplikasi</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Aplikasi web Iris Classifier adalah sebuah aplikasi yang menggunakan model machine learning untuk memprediksi jenis bunga iris berdasarkan karakteristik fisiknya. Aplikasi ini merupakan contoh implementasi sederhana dari model klasifikasi yang dapat digunakan untuk mendemonstrasikan bagaimana model machine learning dapat diintegrasikan ke dalam aplikasi web.</p>
+                        
+                        <h4 class="mt-4 mb-3">Fitur Utama</h4>
+                        <ul>
+                            <li>Prediksi jenis bunga iris secara real-time</li>
+                            <li>Visualisasi probabilitas hasil prediksi</li>
+                            <li>Antarmuka pengguna yang intuitif dan responsif</li>
+                            <li>Tampilan yang menarik dan modern</li>
+                        </ul>
+                        
+                        <h4 class="mt-4 mb-3">Teknologi yang Digunakan</h4>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h5>Flask</h5>
+                                <p>Framework web Python yang digunakan untuk membuat aplikasi web.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h5>Scikit-learn</h5>
+                                <p>Library machine learning Python yang digunakan untuk melatih dan menerapkan model Random Forest.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h5>Bootstrap 5</h5>
+                                <p>Framework CSS untuk membuat tampilan aplikasi yang responsif dan menarik.</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h5>JavaScript</h5>
+                                <p>Digunakan untuk membuat interaksi pengguna yang dinamis dan responsif.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+         
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-header">
+                        <h2 class="m-0"><i class="fas fa-leaf me-2"></i>Dataset Iris</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Dataset Iris berisi informasi tentang 3 jenis bunga iris:</p>
+                        <ul>
+                            <li><strong>Iris Setosa</strong></li>
+                            <li><strong>Iris Versicolor</strong></li>
+                            <li><strong>Iris Virginica</strong></li>
+                        </ul>
+                        <p>Setiap sampel memiliki 4 fitur yang diukur dalam sentimeter:</p>
+                        <ul>
+                            <li><strong>Sepal Length:</strong> Panjang kelopak bunga</li>
+                            <li><strong>Sepal Width:</strong> Lebar kelopak bunga</li>
+                            <li><strong>Petal Length:</strong> Panjang mahkota bunga</li>
+                            <li><strong>Petal Width:</strong> Lebar mahkota bunga</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card feature-card">
+                    <div class="card-header">
+                        <h2 class="m-0"><i class="fas fa-robot me-2"></i>Model Machine Learning</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Aplikasi ini menggunakan model Random Forest Classifier yang dilatih pada dataset Iris. Model ini memiliki karakteristik:</p>
+                        <ul>
+                            <li><strong>Algoritma:</strong> Random Forest</li>
+                            <li><strong>Jumlah Estimator:</strong> 100</li>
+                            <li><strong>Akurasi:</strong> ~95% pada data testing</li>
+                            <li><strong>Fitur Input:</strong> 4 fitur numerik</li>
+                            <li><strong>Output:</strong> 3 kelas (Setosa, Versicolor, Virginica)</li>
+                        </ul>
+                        <p>Random Forest adalah algoritma ensemble yang membuat beberapa pohon keputusan dan menggabungkan hasil prediksinya untuk mendapatkan prediksi yang lebih akurat dan stabil.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <h5>Iris Classifier</h5>
+                    <p>Aplikasi web untuk klasifikasi bunga iris menggunakan machine learning.</p>
+                    <div class="creator-badge">
+                        <i class="fas fa-code me-2"></i>Dikembangkan oleh: Fadli Kurnia Ramadhan_2307373_SIKA
+                    </div>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p>© {{ current_year }} Iris Classifier. All rights reserved.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-2"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-white me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris Classifier - Aplikasi Web ML</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Iris Flower Animation Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30,50 Q50,20 70,50 T90,50" fill="none" stroke="%23e0e0ff" stroke-width="1"/><circle cx="50" cy="50" r="5" fill="%23d8d0ff"/></svg>') repeat;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        /* Floating Iris Petals */
+        @keyframes floatPetal {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .floating-petal {
+            position: fixed;
+            width: 30px;
+            height: 12px;
+            background: linear-gradient(135deg, #d4c1ff, #9c88ff);
+            border-radius: 100% 0;
+            bottom: -20px;
+            z-index: -1;
+            animation: floatPetal 15s linear infinite;
+        }
+        
+        /* Pulsing Glow Effect */
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(108, 92, 231, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(108, 92, 231, 0.4);
+            }
+        }
+
+        /* Soft Float Animation */
+        @keyframes softFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        /* Color Transition Animation */
+        @keyframes colorTransition {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 15s ease infinite;
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 10s ease infinite;
+        }
+        
+        .header h1 {
+            animation: softFloat 6s ease-in-out infinite;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #6c5ce7, #2980b9, #8e44ad, #3498db);
+            background-size: 300% 300%;
+            animation: colorTransition 10s ease infinite;
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            animation: pulseGlow 5s infinite;
+            border: none;
+            margin-bottom: 2rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(108, 92, 231, 0.25);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #6c5ce7, #2980b9);
+            background-size: 200% 200%;
+            animation: colorTransition 10s ease infinite;
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.2rem;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #5649c0);
+            border: none;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5649c0, #4a3cb7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(108, 92, 231, 0.4);
+        }
+        
+        .btn-outline-primary {
+            color: #6c5ce7;
+            border-color: #6c5ce7;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+        }
+        
+        .icon-feature {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #6c5ce7;
+        }
+        
+        .result-box {
+            display: none;
+            transition: all 0.5s ease;
+            transform-origin: top;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-range::-webkit-slider-thumb {
+            background: #6c5ce7;
+        }
+        
+        .form-range::-moz-range-thumb {
+            background: #6c5ce7;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(108, 92, 231, 0.3);
+        }
+        
+        /* Subtle leaf pattern on feature cards */
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><path d="M10,30 Q30,10 50,30" fill="none" stroke="%23f0f0ff" stroke-width="2"/></svg>') no-repeat;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #6c5ce7, #5649c0);
+            background-size: 200% 200%;
+            animation: colorTransition 5s ease infinite;
+            transition: width 1s ease-in-out;
+        }
+        
+        #loader {
+            display: none;
+            margin: 20px auto;
+        }
+        
+        .spinner-border {
+            color: #6c5ce7 !important;
+        }
+        
+        /* Badge Animation */
+        @keyframes badgePulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        .badge {
+            animation: badgePulse 2s infinite;
+            background: linear-gradient(135deg, #6c5ce7, #5649c0);
+        }
+        
+        /* Social Links Animation */
+        .social-links a {
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        
+        .social-links a:hover {
+            transform: translateY(-3px) scale(1.2);
+            color: #a29bfe !important;
+        }
+        
+        /* Creator Badge */
+        .creator-badge {
+            position: relative;
+            display: inline-block;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #6c5ce7, #5649c0);
+            color: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .creator-badge::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0);
+            }
+            25% {
+                transform: translate(20px, 20px);
+            }
+            50% {
+                transform: translate(40px, 0);
+            }
+            75% {
+                transform: translate(20px, -20px);
+            }
+        }
+        
+        /* Alert Animation */
+        .alert {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% {
+                left: -100%;
+            }
+            20% {
+                left: 100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        /* Iris flower images */
+        .iris-image {
+            position: absolute;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .iris-image-1 {
+            top: 20%;
+            left: 5%;
+            width: 120px;
+            height: 120px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g transform="translate(60,60)"><path d="M0,-30 C20,-25 20,25 0,30 C-20,25 -20,-25 0,-30" fill="%239c88ff" /><path d="M-2,-2 C15,-15 15,15 -2,2 C-15,15 -15,-15 -2,-2" fill="%23f8f8f8" /></g></svg>') no-repeat;
+            animation: softFloat 8s infinite ease-in-out;
+        }
+        
+        .iris-image-2 {
+            bottom: 15%;
+            right: 5%;
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g transform="translate(50,50)"><path d="M0,-25 C15,-20 15,20 0,25 C-15,20 -15,-20 0,-25" fill="%236c5ce7" /><path d="M-2,-2 C10,-12 10,12 -2,2 C-12,12 -12,-12 -2,-2" fill="%23f0f0ff" /></g></svg>') no-repeat;
+            animation: softFloat 12s infinite ease-in-out reverse;
+        }
+        
+        .about-card-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .about-card-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><path d="M20,100 Q100,20 180,100 Q100,180 20,100" fill="none" stroke="%23f0f0ff" stroke-width="1"/><path d="M40,100 Q100,40 160,100 Q100,160 40,100" fill="none" stroke="%23f0f0ff" stroke-width="1"/></svg>') no-repeat right bottom;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        /* Fade-in animation for page load */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .content-section {
+            animation: fadeIn 1s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Petals -->
+    <div class="floating-petal" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="floating-petal" style="left: 20%; animation-delay: 3s;"></div>
+    <div class="floating-petal" style="left: 35%; animation-delay: 5s;"></div>
+    <div class="floating-petal" style="left: 50%; animation-delay: 7s;"></div>
+    <div class="floating-petal" style="left: 65%; animation-delay: 2s;"></div>
+    <div class="floating-petal" style="left: 80%; animation-delay: 6s;"></div>
+    <div class="floating-petal" style="left: 90%; animation-delay: 4s;"></div>
+
+    <!-- Decorative Iris Images -->
+    <div class="iris-image iris-image-1"></div>
+    <div class="iris-image iris-image-2"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container text-center">
+            <h1 class="display-4"><i class="fas fa-seedling me-2"></i>IRIS CLASSIFIER</h1>
+            <p class="lead">Aplikasi Web Klasifikasi Bunga Iris dengan Machine Learning</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mb-5 content-section">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="m-0"><i class="fas fa-magnifying-glass me-2"></i>Prediksi Jenis Bunga Iris</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="prediction-form">
+                            <div class="row">
+                                {% for feature in feature_names %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card feature-card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h5 class="card-title">{{ feature }}</h5>
+                                                <span class="badge" id="{{ feature.replace(' ', '_') }}_value">0.0</span>
+                                            </div>
+                                            <input type="range" class="form-range" min="0" max="10" step="0.1" value="0" 
+                                                   id="{{ feature.replace(' ', '_') }}" name="{{ feature.replace(' ', '_') }}"
+                                                   oninput="updateValue('{{ feature.replace(' ', '_') }}')">
+                                            <div class="d-flex justify-content-between">
+                                                <small>0</small>
+                                                <small>10</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-wand-magic-sparkles me-2"></i>Prediksi Sekarang
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="loader" class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Memproses prediksi...</p>
+                        </div>
+
+                        <div id="result" class="result-box mt-4">
+                            <div class="alert alert-primary">
+                                <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Hasil Prediksi</h4>
+                                <p>Jenis bunga iris yang diprediksi adalah: <strong id="prediction-result">-</strong></p>
+                            </div>
+                            
+                            <h5 class="mt-4 mb-3">Probabilitas untuk setiap jenis:</h5>
+                            <div id="probabilities-container">
+                                {% for target in target_names %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>{{ target }}</span>
+                                        <span id="prob-{{ target.replace(' ', '_') }}">0%</span>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" id="progress-{{ target.replace(' ', '_') }}" 
+                                             role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="m-0"><i class="fas fa-info-circle me-2"></i>Tentang Dataset Iris</h2>
+                    </div>
+                    <div class="card-body position-relative">
+                        <div class="about-card-bg"></div>
+                        <div class="about-card-content">
+                            <p>Dataset Iris adalah salah satu dataset paling terkenal dalam machine learning. Dataset ini berisi informasi tentang 3 jenis bunga iris (Setosa, Versicolor, dan Virginica) dengan 4 fitur:</p>
+                            <ul>
+                                <li><strong>Sepal Length:</strong> Panjang kelopak bunga (cm)</li>
+                                <li><strong>Sepal Width:</strong> Lebar kelopak bunga (cm)</li>
+                                <li><strong>Petal Length:</strong> Panjang mahkota bunga (cm)</li>
+                                <li><strong>Petal Width:</strong> Lebar mahkota bunga (cm)</li>
+                            </ul>
+                            <p>Model machine learning yang digunakan adalah Random Forest Classifier yang telah dilatih pada dataset ini.</p>
+                            <div class="text-center mt-3">
+                                <a href="/about" class="btn btn-outline-primary">Pelajari Lebih Lanjut</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <h5>Iris Classifier</h5>
+                    <p>Aplikasi web untuk klasifikasi bunga iris menggunakan machine learning.</p>
+                    <div class="creator-badge">
+                        <i class="fas fa-code me-2"></i>Dikembangkan oleh: Fadli Kurnia Ramadhan_2307373_SIKA
+                    </div>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p>© {{ current_year }} Iris Classifier. All rights reserved.</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-2"><i class="fab fa-github"></i></a>
+                        <a href="#" class="text-white me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Create and add floating petals dynamically
+        function createPetals() {
+            for (let i = 0; i < 15; i++) {
+                const petal = document.createElement('div');
+                petal.classList.add('floating-petal');
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.animationDelay = Math.random() * 20 + 's';
+                petal.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                petal.style.opacity = Math.random() * 0.5 + 0.1;
+                petal.style.transform = `scale(${Math.random() * 0.7 + 0.3}) rotate(${Math.random() * 360}deg)`;
+                document.body.appendChild(petal);
+            }
+        }
+
+        // Function to update slider values
+        function updateValue(id) {
+            const value = document.getElementById(id).value;
+            document.getElementById(id + '_value').textContent = value;
+        }
+
+        // Form submission handler
+        document.getElementById('prediction-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loader
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Send prediction request
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                // Show results
+                document.getElementById('prediction-result').textContent = data.prediction;
+                
+                // Update probabilities
+                data.probabilities.forEach(item => {
+                    const targetId = item.name.replace(' ', '_');
+                    document.getElementById('prob-' + targetId).textContent = item.probability + '%';
+                    document.getElementById('progress-' + targetId).style.width = item.probability + '%';
+                });
+                
+                // Show result box with animation
+                const resultBox = document.getElementById('result');
+                resultBox.style.display = 'block';
+                resultBox.style.animation = 'fadeInUp 0.8s forwards';
+                
+                // Smooth scroll to result
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            })
+            .catch(error => {
+                document.getElementById('loader').style.display = 'none';
+                alert('Error: ' + error);
+            });
+        });
+
+        // Initialize values and create petals on page load
+        window.onload = function() {
+            {% for feature in feature_names %}
+            updateValue("{{ feature|replace(' ', '_') }}");
+            {% endfor %}
+            
+            createPetals();
+            
+            // Add animation to cards
+            document.querySelectorAll('.card').forEach((card, index) => {
+                card.style.animationDelay = (index * 0.1) + 's';
+                card.style.opacity = '0';
+                card.style.animation = 'fadeIn 0.8s forwards ' + (index * 0.1) + 's';
+            });
+        };
+    </script>
+</body>
+</html>
